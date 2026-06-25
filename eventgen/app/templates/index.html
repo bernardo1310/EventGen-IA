@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Eventos - EventGen AI{% endblock %}
+
+{% block content %}
+
+<div class="eg-hero text-center mb-5">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="EventGen AI" class="hero-logo mb-3">
+    <p class="text-muted mb-0">Otimização inteligente de equipes para eventos com Algoritmos Genéticos</p>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="fw-semibold mb-0 section-title">
+        <i class="bi bi-calendar3 me-2 text-accent"></i>Eventos Cadastrados
+    </h5>
+    <a href="{{ url_for('events.new_event') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>Novo Evento
+    </a>
+</div>
+
+{% if events %}
+<div class="row g-4">
+    {% for event in events %}
+    <div class="col-12 col-md-6 col-xl-4">
+        <div class="card eg-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h6 class="card-title fw-semibold mb-0">{{ event['name'] }}</h6>
+                    <span class="badge bg-accent-soft text-accent">
+                        <i class="bi bi-people-fill me-1"></i>{{ event['total_participants'] }}
+                    </span>
+                </div>
+                <div class="event-meta mb-3">
+                    <div class="meta-row">
+                        <i class="bi bi-shield-check text-muted"></i>
+                        <span>{{ event['security_count'] }} seguranças</span>
+                    </div>
+                    <div class="meta-row">
+                        <i class="bi bi-fire text-muted"></i>
+                        <span>{{ event['firefighter_count'] }} brigadistas</span>
+                    </div>
+                    <div class="meta-row">
+                        <i class="bi bi-heart-pulse text-muted"></i>
+                        <span>{{ event['medical_count'] }} equipes médicas</span>
+                    </div>
+                    <div class="meta-row">
+                        <i class="bi bi-map text-muted"></i>
+                        <span>{{ event['area_count'] }} área{% if event['area_count'] != 1 %}s{% endif %} cadastrada{% if event['area_count'] != 1 %}s{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pt-0 pb-3 px-3">
+                <a href="{{ url_for('events.event_detail', event_id=event['id']) }}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-arrow-right-circle me-1"></i>Ver Detalhes
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state text-center py-5">
+    <div class="empty-icon mb-3">
+        <i class="bi bi-calendar-x"></i>
+    </div>
+    <h6 class="fw-semibold mb-2">Nenhum evento cadastrado</h6>
+    <p class="text-muted mb-4">Cadastre um evento para começar a otimizar a distribuição de equipes.</p>
+    <a href="{{ url_for('events.new_event') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Cadastrar Primeiro Evento
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

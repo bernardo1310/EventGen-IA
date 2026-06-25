@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event['name'] }} - EventGen AI{% endblock %}
+
+{% block content %}
+
+<div class="mb-3">
+    <a href="{{ url_for('events.index') }}" class="text-muted small text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>Voltar aos eventos
+    </a>
+</div>
+
+<!-- Event Header -->
+<div class="card eg-card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-12 col-md-8">
+                <h4 class="fw-semibold mb-1">{{ event['name'] }}</h4>
+                <div class="d-flex flex-wrap gap-3 mt-2">
+                    <span class="resource-badge">
+                        <i class="bi bi-people-fill"></i>
+                        {{ event['total_participants'] }} participantes
+                    </span>
+                    <span class="resource-badge">
+                        <i class="bi bi-shield-check"></i>
+                        {{ event['security_count'] }} seguranças
+                    </span>
+                    <span class="resource-badge">
+                        <i class="bi bi-fire"></i>
+                        {{ event['firefighter_count'] }} brigadistas
+                    </span>
+                    <span class="resource-badge">
+                        <i class="bi bi-heart-pulse"></i>
+                        {{ event['medical_count'] }} eq. médicas
+                    </span>
+                </div>
+            </div>
+            <div class="col-12 col-md-4 mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
+                <form method="POST" action="{{ url_for('optimization.run_optimization', event_id=event['id']) }}" id="optimizeForm">
+                    <button type="submit" class="btn btn-primary" id="optimizeBtn"
+                            {% if not areas %}disabled{% endif %}>
+                        <i class="bi bi-cpu me-1"></i>Executar Otimização
+                    </button>
+                </form>
+                <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteEventModal">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% if not areas %}
+        <div class="alert alert-warning mt-3 mb-0 py-2 small">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Cadastre ao menos uma área para executar a otimização.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- Areas Column -->
+    <div class="col-12 col-lg-5">
+        <div class="card eg-card h-100">
+            <div class="card-header eg-card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-map me-2"></i>Áreas do Evento
+                </h6>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#areaModal">
+                    <i class="bi bi-plus me-1"></i>Adicionar
+                </button>
+            </div>
+            <div class="card-body p-0">
+                {% if areas %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 eg-table">
+                        <thead>
+                            <tr>
+                                <th>Área</th>
+                                <th>Público</th>
+                                <th>Prioridade</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for area in areas %}
+                            <tr>
+                                <td class="fw-medium">{{ area['name'] }}</td>
+                                <td>{{ area['estimated_people'] }}</td>
+                                <td>
+                                    <span class="priority-badge priority-{{ area['priority'].lower() }}">
+                                        {{ area['priority'] }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('areas.delete_area', area_id=area['id']) }}"
+                                          onsubmit="return confirm('Remover esta área?')">
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 px-3">
+                    <i class="bi bi-map text-muted" style="font-size:2rem;"></i>
+                    <p class="text-muted small mt-2 mb-0">Nenhuma área cadastrada ainda.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Optimization Results Column -->
+    <div class="col-12 col-lg-7">
+        {% if optimization %}
+        <div class="card eg-card mb-3">
+            <div class="card-header eg-card-header">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-graph-up me-2"></i>Resultado da Otimização
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-4">
+                        <div class="stat-card text-center">
+                            <div class="stat-value text-accent">{{ optimization.best_fitness }}</div>
+                            <div class="stat-label">Fitness</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card text-center">
+                            <div class="stat-value">{{ optimization.generations }}</div>
+                            <div class="stat-label">Gerações</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card text-center">
+                            <div class="stat-value">{{ "%.2f"|format(optimization.processing_time) }}s</div>
+                            <div class="stat-label">Tempo</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if optimization.result.fitness_history %}
+                <div class="mb-2">
+                    <label class="form-label small fw-medium text-muted">Evolução do Fitness por Geração</label>
+                    <canvas id="fitnessChart" height="80"></canvas>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Distribution Table -->
+        <div class="card eg-card mb-3">
+            <div class="card-header eg-card-header">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-table me-2"></i>Distribuição de Recursos
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0 eg-table">
+                        <thead>
+                            <tr>
+                                <th>Área</th>
+                                <th>Público</th>
+                                <th>Prioridade</th>
+                                <th><i class="bi bi-shield-check"></i></th>
+                                <th><i class="bi bi-fire"></i></th>
+                                <th><i class="bi bi-heart-pulse"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alloc in optimization.result.allocations %}
+                            <tr>
+                                <td class="fw-medium">{{ alloc.area_name }}</td>
+                                <td>{{ alloc.estimated_people }}</td>
+                                <td>
+                                    <span class="priority-badge priority-{{ alloc.priority.lower() }}">
+                                        {{ alloc.priority }}
+                                    </span>
+                                </td>
+                                <td><strong>{{ alloc.security }}</strong></td>
+                                <td><strong>{{ alloc.firefighters }}</strong></td>
+                                <td><strong>{{ alloc.medical }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Area Cards -->
+        <h6 class="fw-semibold mb-3 section-title">
+            <i class="bi bi-grid me-2 text-accent"></i>Detalhamento por Área
+        </h6>
+        <div class="row g-3">
+            {% for alloc in optimization.result.allocations %}
+            <div class="col-12 col-sm-6">
+                <div class="card alloc-card priority-card-{{ alloc.priority.lower() }}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-semibold mb-0 small">{{ alloc.area_name }}</h6>
+                            <span class="priority-badge priority-{{ alloc.priority.lower() }}">{{ alloc.priority }}</span>
+                        </div>
+                        <div class="text-muted small mb-3">
+                            <i class="bi bi-people me-1"></i>{{ alloc.estimated_people }} pessoas
+                        </div>
+                        <div class="alloc-resources">
+                            <div class="alloc-resource">
+                                <span class="alloc-icon"><i class="bi bi-shield-check"></i></span>
+                                <span class="alloc-count">{{ alloc.security }}</span>
+                                <span class="alloc-label">Seguranças</span>
+                            </div>
+                            <div class="alloc-resource">
+                                <span class="alloc-icon"><i class="bi bi-fire"></i></span>
+                                <span class="alloc-count">{{ alloc.firefighters }}</span>
+                                <span class="alloc-label">Brigadistas</span>
+                            </div>
+                            <div class="alloc-resource">
+                                <span class="alloc-icon"><i class="bi bi-heart-pulse"></i></span>
+                                <span class="alloc-count">{{ alloc.medical }}</span>
+                                <span class="alloc-label">Eq. Médicas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="card eg-card h-100">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center py-5">
+                <div class="empty-icon mb-3">
+                    <i class="bi bi-cpu"></i>
+                </div>
+                <h6 class="fw-semibold mb-2">Otimização não executada</h6>
+                <p class="text-muted small mb-0">
+                    Cadastre as áreas do evento e clique em<br>
+                    <strong>Executar Otimização</strong> para iniciar o Algoritmo Genético.
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Add Area Modal -->
+<div class="modal fade" id="areaModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content eg-modal">
+            <div class="modal-header">
+                <h6 class="modal-title fw-semibold">
+                    <i class="bi bi-map me-2"></i>Cadastrar Área
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('areas.new_area', event_id=event['id']) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Nome da Área</label>
+                        <input type="text" class="form-control" name="name"
+                               placeholder="Ex.: Palco Principal" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Público Estimado</label>
+                        <input type="number" class="form-control" name="estimated_people"
+                               min="1" placeholder="Ex.: 2000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Prioridade</label>
+                        <select class="form-select" name="priority" required>
+                            <option value="Baixa">Baixa</option>
+                            <option value="Media" selected>Media</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Critica">Critica</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Cadastrar Área
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Event Modal -->
+<div class="modal fade" id="deleteEventModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content eg-modal">
+            <div class="modal-header">
+                <h6 class="modal-title fw-semibold text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Remover Evento
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small mb-0">Esta ação removerá o evento, todas as suas áreas e otimizações. Esta operação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('events.delete_event', event_id=event['id']) }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Remover</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% if optimization and optimization.result.fitness_history %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script id="fitness-history-data" type="application/json">{{ optimization.result.fitness_history | tojson }}</script>
+<script>
+(function() {
+    const historyEl = document.getElementById('fitness-history-data');
+    if (!historyEl) return;
+
+    const history = JSON.parse(historyEl.textContent || '[]');
+    const ctx = document.getElementById('fitnessChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: history.map((_, i) => i + 1),
+            datasets: [{
+                label: 'Fitness',
+                data: history,
+                borderColor: '#2196f3',
+                backgroundColor: 'rgba(33,150,243,0.08)',
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Geração', font: { size: 10 } },
+                    ticks: { font: { size: 10 }, maxTicksLimit: 10 }
+                },
+                y: {
+                    title: { display: true, text: 'Fitness', font: { size: 10 } },
+                    ticks: { font: { size: 10 } }
+                }
+            }
+        }
+    });
+})();
+</script>
+{% endif %}
+
+<script>
+document.getElementById('optimizeForm')?.addEventListener('submit', function() {
+    const btn = document.getElementById('optimizeBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Processando...';
+});
+</script>
+{% endblock %}
