@@ -2,7 +2,7 @@
 
 Sistema de Otimização de Equipes para Eventos com Algoritmos Genéticos
 
-Trabalho acadêmico — Disciplina de Inteligência Artificial
+Trabalho acadêmico — Disciplina de Inteligência Artificial professor Daniel e Juliano
 
 ---
 
@@ -155,48 +155,17 @@ Taxa padrão: 15%
 
 ```
 Cadastro de Evento
-       ↓
+       ->
 Definição de Recursos (seguranças, brigadistas, equipes médicas)
-       ↓
+       ->
 Cadastro de Áreas (nome, público estimado, prioridade)
-       ↓
+       ->
 Execução do Algoritmo Genético
-       ↓
+       ->
 Resultado: melhor fitness, gerações, tempo, distribuição por área
-       ↓
+       ->
 Visualização em tabela e cards por área
 ```
-
----
-
-## Como Executar
-
-### Pré-requisitos
-
-- Python 3.9 ou superior
-- pip
-
-### Instalação
-
-```bash
-# 1. Clonar ou extrair o projeto
-cd eventgen
-
-# 2. (Opcional, mas recomendado) Criar ambiente virtual
-python -m venv venv
-source venv/bin/activate        # Linux / macOS
-venv\Scripts\activate           # Windows
-
-# 3. Instalar dependências
-pip install -r requirements.txt
-
-# 4. Executar a aplicação
-python app.py
-```
-
-A aplicação estará disponível em: `http://127.0.0.1:5000`
-
----
 
 ## Dependências Necessárias
 
@@ -207,49 +176,6 @@ A aplicação estará disponível em: `http://127.0.0.1:5000`
 O banco de dados SQLite é nativo do Python — nenhuma instalação adicional é necessária.
 
 ---
-
-## Como Testar
-
-### Exemplo 1 — Festival de Música
-
-**Evento:**
-- Nome: Festival de Verão
-- Participantes: 8000
-- Seguranças: 40 | Brigadistas: 20 | Equipes médicas: 10
-
-**Áreas:**
-
-| Área | Público | Prioridade |
-|---|---|---|
-| Palco Principal | 4000 | Critica |
-| Entrada / Saída | 1500 | Alta |
-| Praça de Alimentação | 1500 | Media |
-| Área VIP | 500 | Alta |
-| Estacionamento | 500 | Baixa |
-
-**Resultado esperado:** O AG deve concentrar proporcionalmente mais recursos no Palco Principal e nas áreas de prioridade Alta/Critica, enquanto garante cobertura mínima nas demais.
-
----
-
-### Exemplo 2 — Evento Corporativo
-
-**Evento:**
-- Nome: Conferência Tech 2025
-- Participantes: 1200
-- Seguranças: 10 | Brigadistas: 6 | Equipes médicas: 4
-
-**Áreas:**
-
-| Área | Público | Prioridade |
-|---|---|---|
-| Auditório Central | 600 | Critica |
-| Recepção | 300 | Alta |
-| Área de Exposição | 200 | Media |
-| Estacionamento | 100 | Baixa |
-
----
-
-## Considerações Acadêmicas
 
 O algoritmo implementado é **real e funcional**. Nenhum resultado é simulado ou fixo. Cada execução pode produzir resultados ligeiramente diferentes (comportamento estocástico do AG), mas converge consistentemente para distribuições de qualidade elevada graças ao elitismo e ao critério de parada por estagnação.
 
